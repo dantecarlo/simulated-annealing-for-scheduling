@@ -1,0 +1,208 @@
+from math import *
+import random
+
+
+class course:
+    def __init__(self, name, num, hours, stress):
+        self.name = name
+        self.num = num
+        self.hours = hours
+        self.stress = stress
+
+    def __repr__(self):
+        return ("[%s, %s, %s, %s]'\n'" % (self.name, self.num, self.hours, self.stress))
+
+
+class candidate:
+    def __init__(self, cours, day_hours, blocks, course_per_day):
+        self.cand = []
+        self.blocks = blocks
+        self.cours = cours.copy()
+        self.day_hours = day_hours
+        self.slots = []
+        self.fitness = 0
+        self.course_per_day = course_per_day
+        self.fill_cand()
+        self.set_fitness()
+
+    def fill_cand(self):
+        sum = 0
+        # sum of hours
+        for x in range(len(self.cours)):
+            sum = sum + self.cours[x].hours
+        # fill slots
+        for x in range(sum):
+            self.slots.append(x)
+
+        temp_cours = self.cours.copy()
+        print(temp_cours)
+        # fill candidates
+        temp_cand = []
+        for x in range(len(self.slots)):
+            temp_cour = random.choice(temp_cours)
+            idx_h = temp_cours.index(temp_cour)
+            temp_cours[idx_h].hours = temp_cours[idx_h].hours - 1
+            if temp_cours[temp_cours.index(temp_cour)].hours == 0:
+                temp_cours.remove(temp_cour)
+            temp_cand.append(x)
+            temp_cand.append(temp_cour)
+            self.cand.append(temp_cand)
+        print(self.cand)
+
+    # set fitness
+    def set_fitness(self):
+        temp_num = []
+        temp_stress = []
+        prom_temp_stress = []
+        prom_day_cour = []
+        prom_week_cour = []
+        only_one_course_per_day = []
+        prom_only_one_course_per_day = []
+        for x in range(len(self.cand)):
+            temp_num.append(self.cand[x][1].num)
+            temp_stress.append(self.cand[x][1].stress)
+            if (x + 1) % self.day_hours == 0:
+                # Promedio bloques de curso al dia
+                count = 1
+                for y in range(0, len(temp_num) - 1):
+                    if temp_num[y] == temp_num[y + 1]:
+                        count = count + 1
+                    else:
+                        prom_day_cour.append(self.blocks - count)
+                        count = 1
+                prom = 0
+                # Promedio de bloques de curso a la semana
+                for y in range(len(prom_day_cour)):
+                    prom = prom + prom_day_cour[y]
+                if prom_day_cour:
+                    prom = prom / len(prom_day_cour)
+                prom_week_cour.append(prom)
+
+                # prom Stress diario
+                stres = 0
+                for y in range(len(temp_stress)):
+                    stres = stres + temp_stress[y]
+
+                # prom Stress Semanal
+                stres = stres / self.day_hours
+                prom_temp_stress.append(1 / stres)
+
+                # Curso por dia
+                count = 0
+                for y in range(0, len(temp_num) - 1):
+                    if temp_num[y] == temp_num[y + 1]:
+                        y = y + 1
+                    else:
+                        for z in range(y + 1, len(temp_num)):
+                            if temp_num[y] == temp_num[z]:
+                                count = count + 1
+                        if count:
+                            only_one_course_per_day.append(self.course_per_day / count)
+
+                # Prom curso por dia
+                count = 0
+                for y in range(len(only_one_course_per_day)):
+                    count = count + only_one_course_per_day[y]
+                if len(only_one_course_per_day):
+                    prom_only_one_course_per_day.append(count / len(only_one_course_per_day))
+
+                only_one_course_per_day = []
+                temp_num = []
+                temp_stress = []
+                prom_day_cour = []
+
+        prom = 0
+        if len(prom_week_cour):
+            for x in range(len(prom_week_cour)):
+                prom = prom + prom_week_cour[x]
+            prom = prom / len(prom_week_cour)
+            # print(prom)
+            self.fitness = self.fitness + prom
+
+        prom = 0
+        if len(prom_temp_stress):
+            for x in range(len(prom_temp_stress)):
+                prom = prom + prom_temp_stress[x]
+            prom = prom / len(prom_temp_stress)
+            # print(prom)
+        self.fitness = self.fitness + prom
+
+        prom = 0
+        if len(prom_only_one_course_per_day):
+            for x in range(len(prom_only_one_course_per_day)):
+                prom = prom + prom_only_one_course_per_day[x]
+            prom = prom / len(prom_only_one_course_per_day)
+            # print(prom)
+        self.fitness = self.fitness + prom
+
+
+
+    def recall(self):
+        self.cand = []
+        self.fitness = 0
+        self.fill_cand()
+        self.set_fitness()
+
+
+class s_a:
+    def __init__(self, iterations, temperature, candidat):
+        self.iterations = iterations
+        self.temperature = temperature
+        self.candidat = candidat
+
+    def selection(self, temperature=None):
+        if temperature is None:
+            temperature = self.temperature
+        nxt_cand = self.candidat
+        nxt_cand.recall()
+        x = exp(self.candidat.fitness) / temperature
+        y = exp(self.candidat.fitness) / temperature
+        z = exp(nxt_cand.fitness) / temperature
+        probability = (x) / (y + z)
+        nxt_cand_probability = 1 - probability
+        if(nxt_cand_probability > probability):
+            if round(random.uniform(0, 1), 2) > probability:
+                self.candidat = nxt_cand
+
+        return self.candidat
+
+    def step(self):
+        for x in range(0, 10):
+            self.selection()
+        return self.candidat
+
+    def run(self):
+        for x in range(0, self.iterations):
+            self.step()
+            self.temperature = self.temperature * 0.9999
+            print("temperature")
+            print(self.temperature)
+            print("Candidate")
+            print(self.candidat.cand)
+            print("fitness")
+            print(self.candidat.fitness)
+
+
+
+
+
+curs1 = course("Matemáticas", 1, 6, 7)
+curs2 = course("Razonamiento Matemàtico", 2, 2, 5)
+curs3 = course("Comunicación ", 3, 7, 6)
+curs4 = course("Inglés", 4, 2, 8)
+curs5 = course("Arte", 5, 2, 1)
+curs6 = course("Historia, Geografia y Economia", 6, 4, 7)
+curs7 = course("Formación Cívica y Cuidadana", 7, 2, 3)
+curs8 = course("Person, Familia y Relaciones Humanas", 8, 2, 3)
+curs9 = course("Formación Física", 9, 2, 2)
+curs10 = course("Formación Religiosa", 10, 1, 1)
+curs11 = course("Ciencia, Tecnología y Ambiente", 11, 6, 7)
+curs12 = course("Educacion para el Trabajo", 12, 2, 3)
+curs13 = course("Tutoría", 13, 1, 1)
+curs14 = course("Ecologìa y Medio Ambiente", 14, 1, 5)
+cursos = [curs1, curs2, curs3, curs4, curs5, curs6, curs7, curs8, curs9, curs10, curs11, curs12, curs13, curs14]
+
+# Candidate recibe cursos, horas al dia, bloques de curso al dia, cantidad del mismo curso por dia
+cd = candidate(cursos, 8, 2, 1)
+my_s_a = s_a(2, 1000, cd)
+my_s_a.run()
