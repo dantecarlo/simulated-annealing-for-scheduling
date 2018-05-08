@@ -1,5 +1,6 @@
 from math import *
 import random
+import copy
 
 
 class course:
@@ -17,7 +18,7 @@ class candidate:
     def __init__(self, cours, day_hours, blocks, course_per_day):
         self.cand = []
         self.blocks = blocks
-        self.cours = cours.copy()
+        self.cours = copy.deepcopy(cours)
         self.day_hours = day_hours
         self.slots = []
         self.fitness = 0
@@ -34,20 +35,21 @@ class candidate:
         for x in range(sum):
             self.slots.append(x)
 
-        temp_cours = self.cours.copy()
-        print(temp_cours)
+        temp_cours = copy.deepcopy(self.cours)
+        # print(temp_cours)
         # fill candidates
         temp_cand = []
         for x in range(len(self.slots)):
-            temp_cour = random.choice(temp_cours)
-            idx_h = temp_cours.index(temp_cour)
-            temp_cours[idx_h].hours = temp_cours[idx_h].hours - 1
-            if temp_cours[temp_cours.index(temp_cour)].hours == 0:
-                temp_cours.remove(temp_cour)
-            temp_cand.append(x)
-            temp_cand.append(temp_cour)
-            self.cand.append(temp_cand)
-        print(self.cand)
+            if temp_cours:
+                temp_cour = random.choice(temp_cours)
+                idx_h = temp_cours.index(temp_cour)
+                temp_cours[idx_h].hours = temp_cours[idx_h].hours - 1
+                if temp_cours[temp_cours.index(temp_cour)].hours == 0:
+                    temp_cours.remove(temp_cour)
+                temp_cand.append(x)
+                temp_cand.append(temp_cour)
+                self.cand.append(temp_cand)
+        # print(self.cand)
 
     # set fitness
     def set_fitness(self):
@@ -174,16 +176,15 @@ class s_a:
     def run(self):
         for x in range(0, self.iterations):
             self.step()
-            self.temperature = self.temperature * 0.9999
+            self.temperature = self.temperature * 0.99
             print("temperature")
             print(self.temperature)
-            print("Candidate")
-            print(self.candidat.cand)
+            #print("Candidate")
+            #print(self.candidat.cand)
             print("fitness")
             print(self.candidat.fitness)
-
-
-
+        print("Candidate")
+        print(self.candidat.cand)
 
 
 curs1 = course("Matemáticas", 1, 6, 7)
@@ -204,5 +205,5 @@ cursos = [curs1, curs2, curs3, curs4, curs5, curs6, curs7, curs8, curs9, curs10,
 
 # Candidate recibe cursos, horas al dia, bloques de curso al dia, cantidad del mismo curso por dia
 cd = candidate(cursos, 8, 2, 1)
-my_s_a = s_a(100000, 1000, cd)
+my_s_a = s_a(1000, 1000, cd)
 my_s_a.run()
