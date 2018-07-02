@@ -279,7 +279,7 @@ cursos = [curs1, curs2, curs3, curs4, curs5, curs6, curs7, curs8, curs9, curs10,
 # Candidate recibe cursos, horas al dia, bloques de curso al dia, cantidad del mismo curso por dia
 cd = candidate(cursos, 8, 2, 1)
 
-my_s_a = s_a(2000, 100, cd)
+my_s_a = s_a(1000, 100, cd)
 x = my_s_a.candidat
 my_s_a.run()
 print("Candidate")
