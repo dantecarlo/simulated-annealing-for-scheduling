@@ -1,6 +1,7 @@
 from math import *
 import random
 import copy
+import pygame
 
 
 class course:
@@ -249,6 +250,16 @@ class s_a:
         return self.candidat
 
     def run(self):
+        self.display_width = 800
+        self.display_height = 800
+
+        self.white = (255, 255, 255)
+        self.black = (0, 0, 0)
+        self.linesize = 800
+
+        temp_fit = self.candidat.fitness
+
+        pygame.init()
         for x in range(0, self.iterations):
             self.step()
             self.temperature = self.temperature - (self.temperature * 4.5 / (self.iterations))
@@ -258,6 +269,55 @@ class s_a:
             #print(self.candidat.cand)
             print("fitness")
             print(self.candidat.fitness)
+            if x == 0:
+                self.draw(self.candidat)
+            if temp_fit != self.candidat.fitness:
+                self.draw(self.candidat)
+            temp_fit = self.candidat.fitness
+        
+        
+        input()
+        pygame.quit()
+        quit()
+
+
+    def draw(self, cd):
+
+        self.gameDisplay = pygame.display.set_mode((self.display_width, self.display_height))
+        self.clock = pygame.time.Clock()
+
+        self.gameDisplay.fill(self.black)
+        for x in range(cd.day_hours + 2):
+            self.line(1, (self.display_height / (cd.day_hours + 1)) * (x + 1), 0)
+
+        days = ["lunes", "martes", "miercoles", "jueves", "viernes"]
+        for x in range(len(days)):
+            self.line((self.display_width / (len(days))) * (x + 1), self.display_height, 90)
+
+        for x in range(len(days)):
+            self.message_display(days[x], [((self.display_width / (len(days))) * (x + 1)) - 80, 40], 30)
+            for y in range(cd.day_hours):
+                self.message_display(str(cd.schedule[x + (cd.day_hours - 1 * y)]),
+                                     [(self.display_height / len(days)) * (x + 1) - 80,
+                                      (self.display_height / (cd.day_hours + 1)) * (y + 1) + 40],
+                                      8)
+
+        pygame.display.update()
+
+    def text_objects(self, text, font):
+        textSurface = font.render(text, True, self.white)
+        return textSurface, textSurface.get_rect()
+
+    def message_display(self, text, pos, size):
+        largeText = pygame.font.Font('freesansbold.ttf', size)
+        TextSurf, TextRect = self.text_objects(text, largeText)
+        TextRect.center = (pos[0], pos[1])
+        self.gameDisplay.blit(TextSurf, TextRect)
+
+        pygame.display.update()
+
+    def line(self, thingx, thingy, angle):
+        pygame.draw.line(self.gameDisplay, self.white, [thingx, thingy], [thingx + cos(radians(angle)) * self.linesize, thingy - sin(radians(angle)) * self.linesize], 5)
 
 
 curs1 = course("Matemáticas", 1, 6, 7)
